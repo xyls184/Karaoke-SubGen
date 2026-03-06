@@ -1,4 +1,4 @@
-简体中文 English
+简体中文 [English](https://github.com/xyls184/Karaoke-SubGen/edit/main/README_EN.md)
 # AI 警告：此项目由 Gemini 3 生成
 
 我完全不懂 Python，所以对于仓库内的修改直接拿去问 AI 可能会比等我自己解决问题更快。
