@@ -62,6 +62,8 @@ I have only tested this with Chinese, English, and Japanese songs. The code is s
 
 ## FFmpeg Video Composition Guide
 
+My own workflow uses instruction 3.
+
 The following commands should be executed in a terminal or command prompt. Ensure **FFmpeg** is installed and replace filenames/parameters as needed.
 
 >**Note**: For some songs, the instrumental and vocal versions may have different options. You can use editing software to view the waveforms of these two audio files and align them.
@@ -103,7 +105,7 @@ ffmpeg -i input_mv.mp4 -i instrumental.mp3 -i vocal.mp3 -filter_complex "[1:a]vo
     - `[1:a]volume=0.7`: Instrumental volume ratio. Next volume settings is vocal ratio.
         
 
-### （Recommend）Command 3: Generate Clean Plate for VFX (Mute Original + Hardcode Subtitles)
+### ⭕（Recommend）Command 3: Generate Clean Plate for VFX (Mute Original + Hardcode Subtitles)
 
 
 ```Bash
