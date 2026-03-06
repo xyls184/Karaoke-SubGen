@@ -1,61 +1,57 @@
 import re
 import math
 
-# ==========================================
-# 🎵 KTV 歌词转 ASS 配置文件 🎵
-# ==========================================
-
-# === 1. 文件路径 ===
+# 1. 文件路径 / File Paths
 INPUT_LRC = 'lyrics.lrc'
 OUTPUT_ASS = 'output.ass'
 
-# === 2. 视频与排版设置 ===
+# 2. 视频与排版设置 / Video & Layout Settings
 PLAY_RES_X = 1920
 PLAY_RES_Y = 1080
-MARGIN_L = 350  # 左侧边距（防止字幕贴边）
-MARGIN_R = 350  # 右侧边距
-MARGIN_V_L = 250  # 左侧主歌词高度（从底部起算）
-MARGIN_V_R = 100  # 右侧主歌词高度（从底部起算）
-MARGIN_V_TOP = 50  # 顶部括号和声高度（从顶部起算）
+MARGIN_L = 150  # 左侧边距（防止字幕贴边） / Left margin (prevents subtitles from touching edges)
+MARGIN_R = 150  # 右侧边距 / Right margin
+MARGIN_V_L = 250  # 左侧主歌词高度（从底部起算） / Left main lyrics height (from bottom)
+MARGIN_V_R = 100  # 右侧主歌词高度（从底部起算） / Right main lyrics height (from bottom)
+MARGIN_V_TOP = 50  # 顶部括号和声高度（从顶部起算） / Top parenthesis harmony height (from top)
 
-# === 3. 字体与字号设置 ===
-FONT_NAME = '猫啃网糖圆体-测试版'  # 替换回你截图中使用的可爱字体
-FONT_SIZE_MAIN = 90  # 主歌词字号
-FONT_SIZE_TOP = 75  # 顶部和声字号
-OUTLINE_WIDTH = 4  # 描边宽度
-SHADOW_DEPTH = 3  # 阴影距离
+# 3. 字体与字号设置 / Font & Size Settings
+FONT_NAME = '黑体'
+FONT_SIZE_MAIN = 90  # 主歌词字号 / Main lyrics font size
+FONT_SIZE_TOP = 75  # 顶部和声字号 / Top harmony font size
+OUTLINE_WIDTH = 4  # 描边宽度 / Outline width
+SHADOW_DEPTH = 3  # 阴影距离 / Shadow depth
 
-# === 4. 颜色设置 ===
-COLOR_PRIMARY = '&H00A86EFF'  # 唱过的颜色（亮绿/青色）
-COLOR_SECONDARY = '&H00FFFFFF'  # 没唱的底色（纯白）
-COLOR_OUTLINE = '&H00A0D873'  # 描边颜色（深绿）
-COLOR_SHADOW = '&H80000000'  # 阴影颜色（半透明黑）
+# 4. 颜色设置 / Color Settings
+# ASS颜色格式为 &HAABBGGRR (AA透明度, BB蓝, GG绿, RR红, 00为不透明) / ASS color format: &HAABBGGRR (AA=alpha, BB=blue, GG=green, RR=red, 00=opaque)
+COLOR_PRIMARY = '&H00FF8800'  # 唱过的颜色 / Sung color
+COLOR_SECONDARY = '&H00FFFFFF'  # 没唱的底色 / Unsung base color
+COLOR_OUTLINE = '&H00000000'  # 描边颜色 / Outline color
+COLOR_SHADOW = '&H80000000'  # 阴影颜色 / Shadow color
 
-# === 5. 倒数圆点设置 ===
-GAP_THRESHOLD = 5.0  # 间奏大于多少秒触发清屏与倒数
-COUNTDOWN_TIME = 5.0  # 提前多少秒出现倒数点
-DOT_CHAR = '●'  # 圆点字符
-DOT_SIZE = 50  # 圆点字号（\fs50）
+# 5. 倒数圆点设置 / Countdown Dot Settings
+GAP_THRESHOLD = 5.0  # 间奏大于多少秒触发清屏与倒数 / Interval > X seconds triggers clear screen and countdown
+COUNTDOWN_TIME = 5.0  # 提前多少秒出现倒数点 / Seconds ahead to show countdown dots
+DOT_CHAR = '●'  # 圆点字符 / Dot character
+DOT_SIZE = 50  # 圆点字号（\fs50） / Dot font size
 DOT_FADE_COLOR = COLOR_SECONDARY
+ALWAYS_COUNTDOWN_FIRST = True  # 新增：是否在开头第一句强制加倒数进度条 / New: Force countdown progress bar on the very first line
 
-# === 6. 智能断句设置 (核心优化区) ===
-MAX_WIDTH_MAIN = 17  # 主歌词单行最大字数（全角）
-MAX_WIDTH_TOP = 25  # 顶部和声单行最大字数
+# 6. 智能断句设置 / Smart Line Break Settings
+MAX_WIDTH_MAIN = 17  # 主歌词单行最大字数（全角） / Max full-width characters per main line
+MAX_WIDTH_TOP = 25  # 顶部和声单行最大字数 / Max characters per top harmony line
+RATIO_PUNCT = 0.5  # 遇到真正的标点符号 -> 达到 50% 即可换行 / Punctuation -> Break at 50% width
+RATIO_SPACE_CN = 0.6  # 遇到中英文交界处的空格 -> 达到 60% 即可换行 / EN-CN mixed space -> Break at 60% width
+RATIO_SPACE_EN = 0.85  # 遇到纯英文之间的空格 -> 必须达到 85% 极限才换行 / Pure EN space -> Break at 85% width
 
-# 【动态断句阈值】当当前行字数达到最大长度的百分之多少时，允许在此处换行：
-RATIO_PUNCT = 0.5  # 遇到真正的标点符号 (, . ? 等) -> 达到 50% 即可换行
-RATIO_SPACE_CN = 0.6  # 遇到中英文交界处的空格 (如 "Spice 一不小心") -> 达到 60% 即可换行，保留完美语意
-RATIO_SPACE_EN = 0.85  # 遇到纯英文之间的空格 (如 "Lock on") -> 必须达到 85% 极限才换行，防止拆散英文短语
-
-# === 7. 时间轴微调 (延迟补偿) ===
-GLOBAL_DELAY = 0.25
+# 7. 时间轴微调 (延迟补偿) / Timeline Fine-tuning (Delay Compensation)
+GLOBAL_DELAY = 0  # 补偿音响或蓝牙延迟 / Compensate for speaker or bluetooth delay
 
 
-# ==========================================
-# ⚙️ 核心转换逻辑（无需修改下方内容） ⚙️
-# ==========================================
+#  =============================================================================================
+
 
 def get_inline_color(ass_color):
+    """将 &H00FF8800 转换为行内特效需要的 &HFF8800& / Convert color to inline effect format"""
     clean = ass_color.replace('&H00', '&H', 1) if ass_color.startswith('&H00') else ass_color
     return clean + '&' if not clean.endswith('&') else clean
 
@@ -123,33 +119,31 @@ def convert_lrc_to_ass(lrc_file, ass_file):
             next_w_text = words_list[i + 1][0]
             next_w_width = get_word_width(next_w_text)
 
-            # 1. 强制断句：如果加上下一个字就爆表了，必须立刻换行
-            if current_width + next_w_width > max_width:
-                local_chunks.append(current_chunk)
-                current_chunk = []
-                current_width = 0
-                continue
-
-            # 2. 动态智能断句分析
             has_strong_punct = bool(re.search(r'[\.,\?!\;:"\'，。？！、；：“”‘’]', w_text))
             has_space = ' ' in w_text or '　' in w_text
 
             is_curr_chinese = bool(re.search(r'[\u4e00-\u9fff]', w_text))
             is_next_chinese = bool(re.search(r'[\u4e00-\u9fff]', next_w_text))
 
-            threshold_ratio = 1.1  # 默认值 > 1，代表在不满足条件时绝不提前断句
+            threshold_ratio = 1.1
 
             if has_strong_punct:
                 threshold_ratio = RATIO_PUNCT
             elif has_space:
-                # 判断空格的性质：是否有中文字符参与
                 if is_curr_chinese or is_next_chinese:
-                    threshold_ratio = RATIO_SPACE_CN  # 中英/中中交界处，容易断开
+                    threshold_ratio = RATIO_SPACE_CN
                 else:
-                    threshold_ratio = RATIO_SPACE_EN  # 纯英文之间的空格，极难断开
+                    threshold_ratio = RATIO_SPACE_EN
 
-            # 只有当当前累计长度达到了我们判定的阈值，才执行优雅的提前换行
+                    # 达到智能断句阈值 / Reach smart break threshold
             if current_width >= max_width * threshold_ratio:
+                local_chunks.append(current_chunk)
+                current_chunk = []
+                current_width = 0
+                continue
+
+            # 强制断句：如果加上下一个字就爆表了，必须立刻换行 / Forced break: if adding next word exceeds limit
+            if current_width + next_w_width > max_width:
                 local_chunks.append(current_chunk)
                 current_chunk = []
                 current_width = 0
@@ -216,9 +210,11 @@ def convert_lrc_to_ass(lrc_file, ass_file):
         gap = data['sing_start'] if i == 0 else data['sing_start'] - parsed_lines_main[i - 1]['sing_end']
         data['disp_end'] = data['sing_end'] + 0.5
 
-        if gap > GAP_THRESHOLD:
+        # 首句强制开启倒数逻辑 / Force countdown logic for the first line
+        if gap > GAP_THRESHOLD or (i == 0 and ALWAYS_COUNTDOWN_FIRST):
             current_style = 'L'
-            clear_time = max(data['sing_start'] - COUNTDOWN_TIME, last_end_L, last_end_R)
+            # 确保倒数圆点不早于0秒 / Ensure countdown dots don't appear before 0s
+            clear_time = max(0.0, data['sing_start'] - COUNTDOWN_TIME, last_end_L, last_end_R)
             data['style'] = current_style
             data['disp_start'] = clear_time
             data['needs_countdown'] = True
@@ -266,9 +262,15 @@ def convert_lrc_to_ass(lrc_file, ass_file):
     active_c = f"\\1c{get_inline_color(COLOR_PRIMARY)}"
     inactive_c = f"\\c{get_inline_color(DOT_FADE_COLOR)}"
 
+    max_end_time = 0.0  # 用于记录整首歌最晚结束的时间 / Track the latest end time
+
     for data in all_lines:
         ass_start = format_ass_time(data['disp_start'])
         ass_end = format_ass_time(data['disp_end'])
+
+        # 记录最晚的歌词消失时间 / Record max end time
+        if data['disp_end'] > max_end_time:
+            max_end_time = data['disp_end']
 
         if data.get('type') == 'countdown':
             margin_v = data['margin_v']
@@ -292,7 +294,10 @@ def convert_lrc_to_ass(lrc_file, ass_file):
     with open(ass_file, 'w', encoding='utf-8') as f:
         f.write('\n'.join(ass_lines))
 
-    print(f"✅ 转换成功！已生成 {ass_file} (应用延迟: {GLOBAL_DELAY}秒)")
+        # 计算绿幕视频的安全截断时间（歌词结束时间 + 1秒缓冲）/ Calculate safe cut-off time (Subtitle end time + 1s buffer)
+        safe_cut_time = math.ceil(max_end_time) + 1
+
+        print(f"转换成功 / Conversion successful: {ass_file} (延迟补偿 / Delay applied: {GLOBAL_DELAY}s) \n歌词时长 / Lyric Time: {safe_cut_time}")
 
 
 if __name__ == '__main__':
